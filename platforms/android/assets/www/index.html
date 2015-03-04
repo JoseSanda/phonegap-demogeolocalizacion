@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Demo geolocalización</title>
+</head>
+<body>
+   <h1>Demo geolocalizacion</h1>
+   <p id="lat"><span></span></p>
+   <p id="lon"><span></span></p>
+    
+    <script src="cordova.js"></script>
+    <script>
+        var watchId = 0;
+        var iniciar = function(){
+            watchId = navigator.geolocation.watchPosition(
+              function(position){
+                  mostrarPosicion(position);
+              },
+              function(error){
+                alert(JSON.stringify(error));   
+              },
+              {
+                  enableHighAccuracy : true,
+                  maximumAge         :30000,
+                  timeout            :27000
+              }
+            );
+        };
+        var parar = function(){
+            navigator.clearWatch(watchId);
+        };
+        var mostrarPosicion = function(posicion){
+            document.querySelector('#lat span').innerHTML = posicion.coords.latitude;
+            document.querySelector('#lon span').innerHTML = posicion.coords.longitude;
+        };
+        document.addEventListener('deviceready',function(){
+            iniciar(); 
+        });
+    </script>
+</body>
+</html>
