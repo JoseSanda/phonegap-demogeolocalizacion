@@ -2,20 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Demo geolocalización</title>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        html, body {
+            height: 100%;
+        }
+        #cabecera {
+             height: 18%;   
+        }
+        #map {
+            height: 78%;
+        }
+        #lat,#lon,#distance {
+             display:inline;   
+        }
+    </style>
 </head>
 <body>
-   <h1>Demo geolocalizacion</h1>
-   <p id="lat"><span></span></p>
-   <p id="lon"><span></span></p>
+   <div id="cabecera">
+       <h1>Demo geolocalizacion</h1>
+       <p id="lat"><span></span></p>,
+       <p id="lon"><span></span></p>
+       <p id="distance"><span></span></p>
+   </div>
+   <div id="map"></div>
     
     <script src="cordova.js"></script>
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
     <script>
         var watchId = 0;
-        var iniciar = function(){
+        var map = null;
+        var savedPosition = null;
+        var inicializarGeolocalizacion = function(){
             watchId = navigator.geolocation.watchPosition(
               function(position){
-                  mostrarPosicion(position);
+                  if (true) {
+                        savePosition(position);     
+                        mostrarPosicion(position);
+                        //moverMapa(position);
+                  }
               },
               function(error){
                 alert(JSON.stringify(error));   
@@ -25,17 +56,61 @@
                   maximumAge         :30000,
                   timeout            :27000
               }
-            );
+            );                       
         };
+        var inicializarMapa = function() {
+            map = L.map('map').setView([51.505, -0.09], 13);
+            L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
+			    maxZoom: 18, attribution: 'Mapbox', id: 'examples.map-i875mjb7'
+            }).addTo(map);
+        };
+        
         var parar = function(){
             navigator.clearWatch(watchId);
         };
         var mostrarPosicion = function(posicion){
             document.querySelector('#lat span').innerHTML = posicion.coords.latitude;
-            document.querySelector('#lon span').innerHTML = posicion.coords.longitude;
+            document.querySelector('#lon span').innerHTML = posicion.coords.longitude;                        
+            document.querySelector('#distance span').innerHTML = savedPosition.distanceTo(posicion);
         };
+        var moverMapa = function(posicion){
+            if(map !== null){                
+                var pos = [posicion.coords.latitude, posicion.coords.longitude];
+                map.panTo(pos);
+                var marker = L.marker(pos).addTo(map);
+                marker.bindPopup('<p>Aquí estoy!</p>').openPopup();                
+            }
+        };
+        var getLatLong = function(position){            
+            var latLong = null;
+            if(position !== null && typeof position !== 'undefined' && typeof position.coords !== 'undefined'){
+                console.log(position);
+                latLong = L.latLng(position.coords.latitude, position.coords.longitude);               
+            }
+            return latLong;
+        }
+        
+        var nosMovemos = function (position) {
+            var nosMovemos = true;
+            if(savedPosition !== null && position !== null){
+                nosMovemos = savedPosition.distanceTo(getLatLong(position))>10;    
+            } else if(position === null){
+                nosMovemos = false;
+            }
+            return nosMovemos;
+        };        
+        var savePosition = function (position) {
+              var newPosition = getLatLong(position);
+              if(savedPosition === null){
+                savedPosition = newPosition;
+              }else if (map !== null && nosMovemos(newPosition)){
+                   savedPosition = newPosition;
+              }
+        };
+        
         document.addEventListener('deviceready',function(){
-            iniciar(); 
+            inicializarGeolocalizacion(); 
+            inicializarMapa();
         });
     </script>
 </body>
